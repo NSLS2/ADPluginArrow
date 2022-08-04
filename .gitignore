@@ -1,0 +1,11 @@
+*~
+*#
+bin
+lib
+include
+db
+dbd
+envPaths
+O.*
+.vscode/
+__pycache__/
