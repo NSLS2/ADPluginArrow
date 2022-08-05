@@ -18,6 +18,7 @@ cmake .. \
     -DCMAKE_INSTALL_PREFIX=../../.. \
     -DARROW_CSV=ON \
     -DARROW_JEMALLOC=OFF \
+    -DARROW_COMPUTE=ON \
     $ARROW_CMAKE_OPTIONS
 
 # Build and install arrow

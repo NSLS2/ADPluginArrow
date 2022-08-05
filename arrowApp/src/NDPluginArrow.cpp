@@ -65,11 +65,38 @@ static const char *pluginName="NDPluginArrow";
 
 asynStatus NDPluginArrow::openFile(const char* fileName, NDFileOpenMode_t openMode, NDArray* pArray){
     const char* functionName = "openFile";
+
+
+    return asynSuccess;
+}
+
+
+arrow::Status NDPluginArrow::writeCSV(){
+    const char* functionName = "writeCSV";
+
+    std::string filename;
+    getStringParam(NDFileName, filename);
+
+    ARROW_ASSIGN_OR_RAISE(auto output, arrow::io::FileOutputStream::Open(filename));
+    auto writeOpts = arrow::csv::WriteOptions::Defaults();
+    if(arrow::csv::WriteCSV(*(this->table), writeOpts, output.get()).ok()){
+        ERR("Failed to write out csv file!");
+    }
+    return arrow::Status::OK();
+}
+
+
+asynStatus NDPluginArrow::writeFile(NDArray* pArray){
+    const char* functionName = "writeFile";
+
+    arrow::Status status;
+
+
     NDColorMode_t colorMode;
     NDDataType_t dataType = pArray->dataType;
     int xSize, ySize;
     NDAttribute* pAttribute;
-    asynStatus status = asynSuccess;
+    asynStatus adStatus = asynSuccess;
 
     pAttribute = pArray->pAttributeList->find("ColorMode");
     if (pAttribute) pAttribute->getValue(NDAttrInt32, &colorMode);
@@ -132,7 +159,6 @@ asynStatus NDPluginArrow::openFile(const char* fileName, NDFileOpenMode_t openMo
     auto intensityArrayPtr = intensityArrayBuilder.Finish();
     if(!xCoordArrayPtr.ok() || !yCoordArrayPtr.ok() || !intensityArrayPtr.ok()) {
         ERR("Failed to build Arrow arrays!");
-        return asynError;
     }
     
     std::shared_ptr<arrow::Array> xCoordArray = *xCoordArrayPtr;
@@ -146,26 +172,10 @@ asynStatus NDPluginArrow::openFile(const char* fileName, NDFileOpenMode_t openMo
     
     this->table = arrow::Table::Make(this->schema, arrays);
 
-    return status;
-}
+    status = writeCSV();
 
 
-asynStatus NDPluginArrow::writeCSV(){
-    const char* functionName = "writeCSV";
-    std::shared_ptr<arrow::io::OutputStream> output = ...;
-    auto writeOpts = arrow::csv::WriteOptions::Defaults();
-    if(arrow::WriteCSV(this->table, writeOpts, output.get()).ok()){
-        ERR("Failed to write out csv file!");
-    }
-}
-
-
-asynStatus NDPluginArrow::writeFile(NDArray* pArray){
-    const char* functionName = "writeFile";
-    asynStatus status = asynSuccess;
-
-
-    return status;
+    return asynSuccess;
 }
 
 
@@ -173,6 +183,16 @@ asynStatus NDPluginArrow::writeFile(NDArray* pArray){
 asynStatus NDPluginArrow::closeFile(){
 
     const char* functionName = "closeFile";
+    asynStatus status = asynSuccess;
+
+
+
+    return status;
+}
+
+asynStatus NDPluginArrow::readFile(NDArray** pArray){
+
+    const char* functionName = "readFile";
     asynStatus status = asynSuccess;
 
 
@@ -313,7 +333,7 @@ NDPluginArrow::NDPluginArrow(
     this->xCoord = arrow::field("X", arrow::int32());
     this->yCoord = arrow::field("Y", arrow::int32());
     this->intensity = arrow::field("Intensity", arrow::int32());
-    this->schema = arrow::schema({this->xCoord, this->yCoord, intensity});
+    this->schema = arrow::schema({this->xCoord, this->yCoord, this->intensity});
 
     // Set some basic plugin info Params
     setStringParam(NDPluginDriverPluginType, "NDPluginArrow");

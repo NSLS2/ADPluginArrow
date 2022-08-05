@@ -20,13 +20,14 @@ using namespace std;
 // Include your external dependency library headers
 #include <arrow/csv/api.h>
 #include <arrow/io/api.h>
+#include <arrow/status.h>
 #include <arrow/ipc/api.h>
 #include <arrow/pretty_print.h>
 #include <arrow/result.h>
-#include <arrow/status.h>
 #include <arrow/table.h>
 #include <arrow/array.h>
 #include <arrow/builder.h>
+#include <arrow/api.h>
 
 
 //version numbers
@@ -75,7 +76,8 @@ class NDPLUGIN_API NDPluginArrow : public NDPluginFile {
         std::shared_ptr<arrow::Schema> schema;
         std::shared_ptr<arrow::Table> table;
 
-        asynStatus writeCSV();
+
+        arrow::Status writeCSV();
 };
 
 // Def that computes the number of params specific to the plugin
