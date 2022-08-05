@@ -11,6 +11,8 @@ ifeq (vxWorks,$(findstring vxWorks, $(T_A)))
     CODE_CXXFLAGS=
 endif
 
+USR_INCLUDES += -I$(TOP)/arrowSupport/include
+
 DBD += NDPluginArrow.dbd
 
 INC += NDPluginArrow.hpp
