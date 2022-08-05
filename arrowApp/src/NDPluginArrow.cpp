@@ -54,18 +54,10 @@
               __VA_ARGS__);
 
 
-// Include your external dependency library headers
-//#include <arrow/csv/api.h>
-#include <arrow/io/api.h>
-#include <arrow/ipc/api.h>
-#include <arrow/pretty_print.h>
-#include <arrow/result.h>
-#include <arrow/status.h>
-#include <arrow/table.h>
+
 
 // Namespaces
 using namespace std;
-using namespace arrow::Status;
 
 // Name of the plugin
 static const char *pluginName="NDPluginArrow";
@@ -79,7 +71,7 @@ asynStatus NDPluginArrow::openFile(const char* fileName, NDFileOpenMode_t openMo
     NDAttribute* pAttribute;
     asynStatus status = asynSuccess;
 
-    pAttribute = pArray->AttributeList->find("ColorMode");
+    pAttribute = pArray->pAttributeList->find("ColorMode");
     if (pAttribute) pAttribute->getValue(NDAttrInt32, &colorMode);
 
     if (colorMode != NDColorModeMono) {
@@ -88,7 +80,7 @@ asynStatus NDPluginArrow::openFile(const char* fileName, NDFileOpenMode_t openMo
     }
 
     std::shared_ptr<arrow::Table> table;
-    std::vector<std::shared_ptr<Array>> arrays;
+    std::vector<std::shared_ptr<arrow::Array>> arrays;
 
     arrow::Int32Builder xCoordArrayBuilder;
     arrow::Int32Builder yCoordArrayBuilder;
@@ -107,15 +99,15 @@ asynStatus NDPluginArrow::openFile(const char* fileName, NDFileOpenMode_t openMo
                     if(((uint8_t*) pArray->pData)[i * xSize + j] != 0){
                         xCoordVector.push_back(j);
                         yCoordVector.push_back(i);
-                        intensityVector.push_back((int) ((uint8_t*) pArray->pData)[i * xSize + j])
+                        intensityVector.push_back((int32_t) ((uint8_t*) pArray->pData)[i * xSize + j]);
                         numRows++;
                     }
                 case NDInt16:
                 case NDUInt16:
                     if(((uint16_t*) pArray->pData)[i * xSize + j] != 0){
                         xCoordVector.push_back(j);
-                        yCoordVector.push_back(i);                        
-                        intensityVector.push_back((uint32_t) ((uint16_t*) pArray->pData)[i * xSize + j])
+                        yCoordVector.push_back(i);
+                        intensityVector.push_back((int32_t) ((uint16_t*) pArray->pData)[i * xSize + j]);
                         numRows++;
                     }
                 default:
@@ -138,13 +130,13 @@ asynStatus NDPluginArrow::openFile(const char* fileName, NDFileOpenMode_t openMo
     auto xCoordArrayPtr = xCoordArrayBuilder.Finish();
     auto yCoordArrayPtr = yCoordArrayBuilder.Finish();
     auto intensityArrayPtr = intensityArrayBuilder.Finish();
-    if(!xCoordArrayPtr.ok() || !yCoordArrayPtr || !intensityArrayPtr.ok()) {
+    if(!xCoordArrayPtr.ok() || !yCoordArrayPtr.ok() || !intensityArrayPtr.ok()) {
         ERR("Failed to build Arrow arrays!");
         return asynError;
     }
     
-    std::shared_ptr<arrow::Array xCoordArray = *xCoordArrayPtr;
-    std::shared_ptr<arrow::Array yCoordArray = *yCoordArrayPtr;
+    std::shared_ptr<arrow::Array> xCoordArray = *xCoordArrayPtr;
+    std::shared_ptr<arrow::Array> yCoordArray = *yCoordArrayPtr;
     std::shared_ptr<arrow::Array> intensityArray = *intensityArrayPtr;
 
     arrays.push_back(xCoordArray);
@@ -152,22 +144,23 @@ asynStatus NDPluginArrow::openFile(const char* fileName, NDFileOpenMode_t openMo
     arrays.push_back(intensityArray);
     
     
-    this->table = arrow::Table::Make(this->schema, &arrays, numRows);
+    this->table = arrow::Table::Make(this->schema, arrays);
 
     return status;
 }
 
 
 asynStatus NDPluginArrow::writeCSV(){
+    const char* functionName = "writeCSV";
     std::shared_ptr<arrow::io::OutputStream> output = ...;
     auto writeOpts = arrow::csv::WriteOptions::Defaults();
-    if(WriteCSV(this->table, writeOpts, output.get()).ok()){
+    if(arrow::WriteCSV(this->table, writeOpts, output.get()).ok()){
         ERR("Failed to write out csv file!");
     }
 }
 
 
-asynStatus NDPluginArrow::writeFile(){
+asynStatus NDPluginArrow::writeFile(NDArray* pArray){
     const char* functionName = "writeFile";
     asynStatus status = asynSuccess;
 
@@ -183,7 +176,6 @@ asynStatus NDPluginArrow::closeFile(){
     asynStatus status = asynSuccess;
 
 
-    auto fs = arrow::fs::FileSystemFromUri(
 
     return status;
 }
@@ -227,6 +219,8 @@ asynStatus NDPluginArrow::writeInt32(asynUser* pasynUser, epicsInt32 value){
  * @params[in]: pArray -> NDArray recieved by the plugin from the camera
  * @return: void
 */
+
+/*
 void NDPluginArrow::processCallbacks(NDArray *pArray){
     static const char* functionName = "processCallbacks";
     NDArray *pScratch;
@@ -286,6 +280,7 @@ void NDPluginArrow::processCallbacks(NDArray *pArray){
 
     callParamCallbacks();
 }
+*/
 
 
 
@@ -296,11 +291,11 @@ NDPluginArrow::NDPluginArrow(
         int maxBuffers, size_t maxMemory,
         int priority, int stackSize, int maxThreads)
         /* Invoke the base class constructor */
-        : NDPluginDriver(portName, queueSize, blockingCallbacks,
+        : NDPluginFile(portName, queueSize, blockingCallbacks,
         NDArrayPort, NDArrayAddr, 1, maxBuffers, maxMemory,
         asynInt32ArrayMask | asynFloat64ArrayMask | asynGenericPointerMask,
         asynInt32ArrayMask | asynFloat64ArrayMask | asynGenericPointerMask,
-        ASYN_MULTIDEVICE, 1, priority, stackSize, maxThreads)
+        ASYN_CANBLOCK, 1, priority, stackSize, maxThreads)
 {
 
     char versionString[25];

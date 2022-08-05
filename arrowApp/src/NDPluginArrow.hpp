@@ -15,7 +15,19 @@
 using namespace std;
 
 //include base plugin driver
-#include "NDPluginDriver.h"
+#include "NDPluginFile.h"
+
+// Include your external dependency library headers
+#include <arrow/csv/api.h>
+#include <arrow/io/api.h>
+#include <arrow/ipc/api.h>
+#include <arrow/pretty_print.h>
+#include <arrow/result.h>
+#include <arrow/status.h>
+#include <arrow/table.h>
+#include <arrow/array.h>
+#include <arrow/builder.h>
+
 
 //version numbers
 #define NDARROW_VERSION      	0
@@ -32,14 +44,14 @@ using namespace std;
 
 
 /* Plugin class, extends plugin driver */
-class NDPluginArrow : public NDPluginFile {
+class NDPLUGIN_API NDPluginArrow : public NDPluginFile {
     public:
         NDPluginArrow(const char *portName, int queueSize, int blockingCallbacks,
             const char* NDArrayPort, int NDArrayAddr, int maxBuffers,
             size_t maxMemory, int priority, int stackSize, int maxThreads);
 
 
-        virtual asynStatus openFile(const char* fileName, NDFileOpenMode_t, openMode, NDArray *pArray);
+        virtual asynStatus openFile(const char* fileName, NDFileOpenMode_t openMode, NDArray *pArray);
         virtual asynStatus readFile(NDArray** pArray);
         virtual asynStatus writeFile(NDArray* pArray);
         virtual asynStatus closeFile();
@@ -59,8 +71,11 @@ class NDPluginArrow : public NDPluginFile {
 
     private:
 
-        std::shared_ptr<arrow::Field> coord, intensity;
+        std::shared_ptr<arrow::Field> xCoord, yCoord, intensity;
         std::shared_ptr<arrow::Schema> schema;
+        std::shared_ptr<arrow::Table> table;
+
+        asynStatus writeCSV();
 };
 
 // Def that computes the number of params specific to the plugin
