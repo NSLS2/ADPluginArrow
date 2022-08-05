@@ -7,5 +7,7 @@ db
 dbd
 envPaths
 O.*
+os/
+*.swp
 .vscode/
 __pycache__/
