@@ -18,9 +18,9 @@ using namespace std;
 #include "NDPluginDriver.h"
 
 //version numbers
-#define ARROW_VERSION      	0
-#define ARROW_REVISION     	0
-#define ARROW_MODIFICATION 	0
+#define NDARROW_VERSION      	0
+#define NDARROW_REVISION     	0
+#define NDARROW_MODIFICATION 	0
 
 
 
@@ -32,14 +32,18 @@ using namespace std;
 
 
 /* Plugin class, extends plugin driver */
-class NDPluginArrow : public NDPluginDriver {
+class NDPluginArrow : public NDPluginFile {
     public:
         NDPluginArrow(const char *portName, int queueSize, int blockingCallbacks,
             const char* NDArrayPort, int NDArrayAddr, int maxBuffers,
             size_t maxMemory, int priority, int stackSize, int maxThreads);
 
 
-        void processCallbacks(NDArray *pArray);
+        virtual asynStatus openFile(const char* fileName, NDFileOpenMode_t, openMode, NDArray *pArray);
+        virtual asynStatus readFile(NDArray** pArray);
+        virtual asynStatus writeFile(NDArray* pArray);
+        virtual asynStatus closeFile();
+        //void processCallbacks(NDArray *pArray);
 
         virtual asynStatus writeInt32(asynUser* pasynUser, epicsInt32 value);
 
@@ -55,10 +59,8 @@ class NDPluginArrow : public NDPluginDriver {
 
     private:
 
-        // init all global variables here
-
-        // init all plugin additional functions here
-
+        std::shared_ptr<arrow::Field> coord, intensity;
+        std::shared_ptr<arrow::Schema> schema;
 };
 
 // Def that computes the number of params specific to the plugin
