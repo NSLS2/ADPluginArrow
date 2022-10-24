@@ -55,7 +55,7 @@
 
 
 // Include your external dependency library headers
-//#include <arrow/csv/api.h>
+#include <arrow/csv/api.h>
 #include <arrow/io/api.h>
 #include <arrow/ipc/api.h>
 #include <arrow/pretty_print.h>
@@ -65,7 +65,6 @@
 
 // Namespaces
 using namespace std;
-using namespace arrow::Status;
 
 // Name of the plugin
 static const char *pluginName="NDPluginArrow";
@@ -79,7 +78,7 @@ asynStatus NDPluginArrow::openFile(const char* fileName, NDFileOpenMode_t openMo
     NDAttribute* pAttribute;
     asynStatus status = asynSuccess;
 
-    pAttribute = pArray->AttributeList->find("ColorMode");
+    pAttribute = pArray->pAttributeList->find("ColorMode");
     if (pAttribute) pAttribute->getValue(NDAttrInt32, &colorMode);
 
     if (colorMode != NDColorModeMono) {
@@ -88,7 +87,7 @@ asynStatus NDPluginArrow::openFile(const char* fileName, NDFileOpenMode_t openMo
     }
 
     std::shared_ptr<arrow::Table> table;
-    std::vector<std::shared_ptr<Array>> arrays;
+    std::vector<std::shared_ptr<arrow::Array>> arrays;
 
     arrow::Int32Builder xCoordArrayBuilder;
     arrow::Int32Builder yCoordArrayBuilder;
@@ -107,7 +106,7 @@ asynStatus NDPluginArrow::openFile(const char* fileName, NDFileOpenMode_t openMo
                     if(((uint8_t*) pArray->pData)[i * xSize + j] != 0){
                         xCoordVector.push_back(j);
                         yCoordVector.push_back(i);
-                        intensityVector.push_back((int) ((uint8_t*) pArray->pData)[i * xSize + j])
+                        intensityVector.push_back((int) ((uint8_t*) pArray->pData)[i * xSize + j]);
                         numRows++;
                     }
                 case NDInt16:
@@ -115,7 +114,7 @@ asynStatus NDPluginArrow::openFile(const char* fileName, NDFileOpenMode_t openMo
                     if(((uint16_t*) pArray->pData)[i * xSize + j] != 0){
                         xCoordVector.push_back(j);
                         yCoordVector.push_back(i);                        
-                        intensityVector.push_back((uint32_t) ((uint16_t*) pArray->pData)[i * xSize + j])
+                        intensityVector.push_back((uint32_t) ((uint16_t*) pArray->pData)[i * xSize + j]);
                         numRows++;
                     }
                 default:
@@ -143,8 +142,8 @@ asynStatus NDPluginArrow::openFile(const char* fileName, NDFileOpenMode_t openMo
         return asynError;
     }
     
-    std::shared_ptr<arrow::Array xCoordArray = *xCoordArrayPtr;
-    std::shared_ptr<arrow::Array yCoordArray = *yCoordArrayPtr;
+    std::shared_ptr<arrow::Array> xCoordArray = *xCoordArrayPtr;
+    std::shared_ptr<arrow::Array> yCoordArray = *yCoordArrayPtr;
     std::shared_ptr<arrow::Array> intensityArray = *intensityArrayPtr;
 
     arrays.push_back(xCoordArray);
@@ -159,14 +158,18 @@ asynStatus NDPluginArrow::openFile(const char* fileName, NDFileOpenMode_t openMo
 
 
 asynStatus NDPluginArrow::writeCSV(){
+    const char* functionName = "writeCSV";
+    /*
     std::shared_ptr<arrow::io::OutputStream> output = ...;
     auto writeOpts = arrow::csv::WriteOptions::Defaults();
-    if(WriteCSV(this->table, writeOpts, output.get()).ok()){
+    if(arrow::WriteCSV(this->table, writeOpts, output.get()).ok()){
         ERR("Failed to write out csv file!");
     }
+    */
+    return asynSuccess;
 }
 
-
+/**
 asynStatus NDPluginArrow::writeFile(){
     const char* functionName = "writeFile";
     asynStatus status = asynSuccess;
@@ -174,6 +177,7 @@ asynStatus NDPluginArrow::writeFile(){
 
     return status;
 }
+*/
 
 
 
@@ -296,7 +300,7 @@ NDPluginArrow::NDPluginArrow(
         int maxBuffers, size_t maxMemory,
         int priority, int stackSize, int maxThreads)
         /* Invoke the base class constructor */
-        : NDPluginDriver(portName, queueSize, blockingCallbacks,
+        : NDPluginFile(portName, queueSize, blockingCallbacks,
         NDArrayPort, NDArrayAddr, 1, maxBuffers, maxMemory,
         asynInt32ArrayMask | asynFloat64ArrayMask | asynGenericPointerMask,
         asynInt32ArrayMask | asynFloat64ArrayMask | asynGenericPointerMask,
