@@ -1,8 +1,9 @@
 # Author: 
 
+include "NDFile.template"
 # include the base driver template file
 include "NDPluginBase.template"
-include "NDFileBase.template"
+
 
 ##################################################################
 # Define all of your PV records here in the following form:

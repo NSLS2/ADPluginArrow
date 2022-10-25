@@ -17,6 +17,7 @@ using namespace std;
 //include base plugin driver
 #include "NDPluginFile.h"
 #include "NDArray.h"
+// Include your external dependency library headers
 #include <arrow/io/api.h>
 #include <arrow/ipc/api.h>
 #include <arrow/pretty_print.h>
@@ -24,6 +25,8 @@ using namespace std;
 #include <arrow/status.h>
 #include <arrow/table.h>
 #include <arrow/filesystem/api.h>
+
+
 
 //version numbers
 #define NDARROW_VERSION      	0
@@ -57,7 +60,7 @@ class NDPLUGIN_API NDPluginArrow : public NDPluginFile
 
         virtual asynStatus writeInt32(asynUser* pasynUser, epicsInt32 value);
 
-        asynStatus writeCSV();
+        arrow::Status writeCSV();
 
     protected:
 
@@ -71,9 +74,10 @@ class NDPLUGIN_API NDPluginArrow : public NDPluginFile
 
     private:
 
-        std::shared_ptr<arrow::Field> coord, intensity;
+        std::shared_ptr<arrow::Field> xCoord, yCoord, intensity;
         std::shared_ptr<arrow::Schema> schema;
         std::shared_ptr<arrow::Table> table;
+
 };
 
 // Def that computes the number of params specific to the plugin
