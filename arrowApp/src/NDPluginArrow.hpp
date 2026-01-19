@@ -33,7 +33,7 @@ using namespace std;
 
 // Define the PVStrings for all of your PV values here in the following format
 //#define NDPluginArrowPVNameString 	"ARROW_PVNAME" 		//DTYP (ex.
-//asynInt32, asynFloat64, asynOctet)
+// asynInt32, asynFloat64, asynOctet)
 
 // Define all necessary tpyes, structs, and enums here
 
