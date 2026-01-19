@@ -11,3 +11,7 @@ os/
 *.swp
 .vscode/
 __pycache__/
+*.local
+# pixi environments
+.pixi/*
+!.pixi/config.toml
