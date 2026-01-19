@@ -10,7 +10,7 @@ To install ADPluginArrow, clone it into your `areaDetector` directory, enter it 
 make
 ```
 
-Note that `ADSupport`, `ADCore`, and any external dependencies must be built/installed first. 
+Note that `ADSupport`, `ADCore`, and any external dependencies must be built/installed first.
 
 Next, open `$(AREA_DETECTOR)/configure/RELEASE_PRODS.local`, and add:
 

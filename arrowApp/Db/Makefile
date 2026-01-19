@@ -1,4 +1,4 @@
-#Author: 
+#Author:
 
 TOP=../..
 include $(TOP)/configure/CONFIG
