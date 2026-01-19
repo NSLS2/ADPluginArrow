@@ -1,0 +1,23 @@
+[workspace]
+authors = ["Jakub Wlodek <jwlodek@bnl.gov>"]
+channels = ["conda-forge"]
+name = "ADPluginArrow"
+platforms = ["linux-64"]
+version = "0.1.0"
+
+[tasks]
+lint = "pre-commit run --all-files"
+build = "make -sj"
+make-paramdefs = "dbtools-gen-paramdefs arrowApp/Db arrowApp/src && pre-commit run --all-files"
+make-bobfiles = "epicsdb2bob arrowApp/Db arrowApp/op/bob -d -r _RBV -t none"
+simulator = "sim/xspdSimulator.py"
+
+[dependencies]
+pre-commit = ">=4.5.1,<5"
+ruff = ">=0.14.0,<0.15"
+pip = ">=25.2,<26"
+python = ">=3.13,<3.14"
+
+[pypi-dependencies]
+epicsdbtools = { git = "https://github.com/jwlodek/epicsdbtools.git" }
+epicsdb2bob = { git = "https://github.com/NSLS2/epicsdb2bob.git" }
