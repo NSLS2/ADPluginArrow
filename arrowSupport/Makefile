@@ -1,9 +1,8 @@
 TOP=..
 include $(TOP)/configure/CONFIG
 
+ifeq ($(BUILD_TESTS), YES)
+DIRS := $(DIRS) gtest
+endif
 
-LIB_INSTALLS_Linux += ../os/linux-x86_64/libarrow.a
-LIB_INSTALLS_Linux += ../os/linux-x86_64/libarrow_bundled_dependencies.a
-LIB_INSTALLS_Linux += ../os/linux-x86_64/libarrow.so
-
-include $(TOP)/configure/RULES
+include $(TOP)/configure/RULES_DIRS
