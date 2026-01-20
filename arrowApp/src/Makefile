@@ -23,7 +23,7 @@ LIBRARY_IOC += NDPluginArrow
 
 NDPluginArrow_SRCS += NDPluginArrow.cpp
 
-include $(AREA_DETECTOR)/ADCore/ADApp/commonLibraryMakefile
+include $(ADCORE)/ADApp/commonLibraryMakefile
 
 include $(TOP)/configure/RULES
 #----------------------------------------
