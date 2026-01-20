@@ -1,25 +1,7 @@
-# Author:
+# Author: Jakub Wlodek
 
+# Include the NDFile template file
 include "NDFile.template"
-# include the base driver template file
+
+# include the base plugin template file
 include "NDPluginBase.template"
-
-
-##################################################################
-# Define all of your PV records here in the following form:
-#
-# record(RECORD_TYPE, "$(P)$(R)PVName"){
-#   field(DTYP, "data type")
-#   field(INP/OUT, "@asyn($(PORT),$(ADDR),$(TIMEOUT))PV_NAME")
-#   field(VAL, "value")
-#   field(SCAN, "I/O Intr")
-# }
-#
-# Consult other .template files for guides on how to write specific PVs
-#
-# The PV_NAME at the end of the INP or OUT field of the record is the
-# PVString defined in NDPluginPLUGINNAMESTANDARD.h.
-#
-# example: #define NDPluginPLUGINNAMESTANDARDPVNameString "PV_NAME"
-#
-##################################################################

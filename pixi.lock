@@ -49,7 +49,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/linux-64/yaml-0.2.5-h280c20c_3.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/zstd-1.5.7-hb78ec9c_6.conda
       - pypi: git+https://github.com/NSLS2/epicsdb2bob.git#56d3d8059022637ce19011a9e1394fc96c4ba1c2
-      - pypi: git+https://github.com/jwlodek/epicsdbtools.git#27f2f545b44ce9e9139980f6736d2fa7431d3d27
+      - pypi: git+https://github.com/jwlodek/epicsdbtools.git#bf8af60357fe2acd47977053c0c9ee7f42b4a459
       - pypi: https://files.pythonhosted.org/packages/24/07/47b797ef5dd22d1b293936aee48d04a1f3901d9b87f01fe719fe34de9100/phoebusgen-3.1.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/2a/06/30f0dba218cf1068fb64cfe759613ca1dd332b2dd89e6cd59c950f609574/rectangle_packer-2.0.5-cp313-cp313-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl
 packages:
@@ -150,9 +150,9 @@ packages:
   - types-mock ; extra == 'dev'
   - import-linter ; extra == 'dev'
   requires_python: '>=3.11'
-- pypi: git+https://github.com/jwlodek/epicsdbtools.git#27f2f545b44ce9e9139980f6736d2fa7431d3d27
+- pypi: git+https://github.com/jwlodek/epicsdbtools.git#bf8af60357fe2acd47977053c0c9ee7f42b4a459
   name: epicsdbtools
-  version: 0.1.dev44+g27f2f545b
+  version: 0.1.dev45+gbf8af6035
   requires_dist:
   - copier ; extra == 'dev'
   - pipdeptree ; extra == 'dev'

@@ -8,8 +8,8 @@ include $(TOP)/configure/CONFIG
 #optimization of db files using dbst(DEFAULT:NO)
 #DB_OPT=YES
 
-DB+=NDPluginArrow.template
-
+DB += NDPluginArrow.template
+DB += NDPluginArrow_settings.req
 
 include $(TOP)/configure/RULES
 
