@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+  <display version="2.0.0">
+    <name>NDPluginArrow</name>
+    <background_color>
+      <color red="187" blue="187" green="187" alpha="255"/>
+    </background_color>
+    <height>20</height>
+    <width>330</width>
+  </display>
