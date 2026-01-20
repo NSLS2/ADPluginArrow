@@ -10,7 +10,7 @@ USR_INCLUDES += -I$(TOP)/arrowSupport/include
 
 DBD += NDPluginArrow.dbd
 
-INC += NDPluginArrow.hpp
+INC += NDPluginArrow.h
 
 LIBRARY_IOC += NDPluginArrow
 
