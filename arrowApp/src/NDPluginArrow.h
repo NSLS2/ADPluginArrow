@@ -25,7 +25,6 @@ using namespace std;
 #include <arrow/result.h>
 #include <arrow/status.h>
 #include <arrow/table.h>
-
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>

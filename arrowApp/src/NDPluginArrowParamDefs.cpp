@@ -3,5 +3,4 @@
 
 #include "NDPluginArrow.h"
 
-void NDPluginArrow::createAllParams() {
-}
+void NDPluginArrow::createAllParams() {}
