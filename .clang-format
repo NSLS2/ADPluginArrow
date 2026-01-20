@@ -1,0 +1,14 @@
+BasedOnStyle: Google
+IndentWidth: 4
+TabWidth: 4
+UseTab: Never
+ColumnLimit: 100
+AccessModifierOffset: 0
+IndentAccessModifiers: true
+
+# pointers/references are aligned to the type
+DerivePointerAlignment: false
+PointerAlignment: Left
+
+# Include space after C-style cast
+SpaceAfterCStyleCast: true

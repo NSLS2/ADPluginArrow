@@ -8,175 +8,122 @@
  *
  */
 
-// include some standard libraries
-#include <iostream>
-#include <math.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
-// include epics/area detector libraries
-#include "NDArray.h"
-#include <epicsMutex.h>
-#include <epicsString.h>
-#include <iocsh.h>
-// Include your plugin's header file here
-#include "NDPluginArrow.hpp"
-#include <epicsExport.h>
-
-// Error message formatters
-#define ERR(msg)                                                               \
-  asynPrint(pasynUserSelf, ASYN_TRACE_ERROR, "ERROR | %s::%s: %s\n",           \
-            pluginName, functionName, msg)
-
-#define ERR_ARGS(fmt, ...)                                                     \
-  asynPrint(pasynUserSelf, ASYN_TRACE_ERROR, "ERROR | %s::%s: " fmt "\n",      \
-            pluginName, functionName, __VA_ARGS__);
-
-// Warning message formatters
-#define WARN(msg)                                                              \
-  asynPrint(pasynUserSelf, ASYN_TRACE_ERROR, "WARN | %s::%s: %s\n",            \
-            pluginName, functionName, msg)
-
-#define WARN_ARGS(fmt, ...)                                                    \
-  asynPrint(pasynUserSelf, ASYN_TRACE_ERROR, "WARN | %s::%s: " fmt "\n",       \
-            pluginName, functionName, __VA_ARGS__);
-
-// Log message formatters
-#define LOG(msg)                                                               \
-  asynPrint(pasynUserSelf, ASYN_TRACEIO_DRIVER, "%s::%s: %s\n", pluginName,    \
-            functionName, msg)
-
-#define LOG_ARGS(fmt, ...)                                                     \
-  asynPrint(pasynUserSelf, ASYN_TRACEIO_DRIVER, "%s::%s: " fmt "\n",           \
-            pluginName, functionName, __VA_ARGS__);
-
-// Include your external dependency library headers
-#include <arrow/api.h>
-#include <arrow/csv/api.h>
-#include <arrow/io/api.h>
-#include <arrow/ipc/api.h>
-#include <arrow/pretty_print.h>
-#include <arrow/result.h>
-#include <arrow/status.h>
-#include <arrow/table.h>
+#include "NDPluginArrow.h"
 
 // Namespaces
 using namespace std;
 
 // Name of the plugin
-static const char *pluginName = "NDPluginArrow";
+static const char* pluginName = "NDPluginArrow";
 
-asynStatus NDPluginArrow::openFile(const char *fileName,
-                                   NDFileOpenMode_t openMode, NDArray *pArray) {
-  const char *functionName = "openFile";
+asynStatus NDPluginArrow::openFile(const char* fileName, NDFileOpenMode_t openMode,
+                                   NDArray* pArray) {
+    const char* functionName = "openFile";
 
-  return asynSuccess;
+    return asynSuccess;
 }
 
 arrow::Status NDPluginArrow::writeCSV() {
-  const char *functionName = "writeCSV";
+    const char* functionName = "writeCSV";
 
-  std::string filename;
-  getStringParam(NDFileName, filename);
+    std::string filename;
+    getStringParam(NDFileName, filename);
 
-  ARROW_ASSIGN_OR_RAISE(auto output,
-                        arrow::io::FileOutputStream::Open(filename));
-  auto writeOpts = arrow::csv::WriteOptions::Defaults();
-  if (arrow::csv::WriteCSV(*(this->table), writeOpts, output.get()).ok()) {
-    ERR("Failed to write out csv file!");
-  }
-  return arrow::Status::OK();
+    ARROW_ASSIGN_OR_RAISE(auto output, arrow::io::FileOutputStream::Open(filename));
+    auto writeOpts = arrow::csv::WriteOptions::Defaults();
+    if (arrow::csv::WriteCSV(*(this->table), writeOpts, output.get()).ok()) {
+        ERR("Failed to write out csv file!");
+    }
+    return arrow::Status::OK();
 }
 
-asynStatus NDPluginArrow::writeFile(NDArray *pArray) {
-  const char *functionName = "writeFile";
+asynStatus NDPluginArrow::writeFile(NDArray* pArray) {
+    const char* functionName = "writeFile";
 
-  arrow::Status status;
+    arrow::Status status;
 
-  NDColorMode_t colorMode;
-  NDDataType_t dataType = pArray->dataType;
-  int xSize, ySize;
-  NDAttribute *pAttribute;
-  asynStatus adStatus = asynSuccess;
+    NDColorMode_t colorMode;
+    NDDataType_t dataType = pArray->dataType;
+    int xSize, ySize;
+    NDAttribute* pAttribute;
+    asynStatus adStatus = asynSuccess;
 
-  pAttribute = pArray->pAttributeList->find("ColorMode");
-  if (pAttribute)
-    pAttribute->getValue(NDAttrInt32, &colorMode);
+    pAttribute = pArray->pAttributeList->find("ColorMode");
+    if (pAttribute) pAttribute->getValue(NDAttrInt32, &colorMode);
 
-  if (colorMode != NDColorModeMono) {
-    ERR("Only mono images are supported!");
-    return asynError;
-  }
-
-  std::shared_ptr<arrow::Table> table;
-  std::vector<std::shared_ptr<arrow::Array>> arrays;
-
-  arrow::Int32Builder xCoordArrayBuilder;
-  arrow::Int32Builder yCoordArrayBuilder;
-  arrow::Int32Builder intensityArrayBuilder;
-  std::vector<int32_t> xCoordVector;
-  std::vector<int32_t> yCoordVector;
-  std::vector<int32_t> intensityVector;
-
-  int64_t numRows = 0;
-  for (int i = 0; i < ySize; i++) {
-    for (int j = 0; j < xSize; j++) {
-      switch (dataType) {
-      case NDInt8:
-      case NDUInt8:
-        if (((uint8_t *)pArray->pData)[i * xSize + j] != 0) {
-          xCoordVector.push_back(j);
-          yCoordVector.push_back(i);
-
-          intensityVector.push_back(
-              (int32_t)((uint8_t *)pArray->pData)[i * xSize + j]);
-          numRows++;
-        }
-      case NDInt16:
-      case NDUInt16:
-        if (((uint16_t *)pArray->pData)[i * xSize + j] != 0) {
-          xCoordVector.push_back(j);
-
-          yCoordVector.push_back(i);
-          intensityVector.push_back(
-              (int32_t)((uint16_t *)pArray->pData)[i * xSize + j]);
-          numRows++;
-        }
-      default:
-        ERR("Data type not supported!");
+    if (colorMode != NDColorModeMono) {
+        ERR("Only mono images are supported!");
         return asynError;
-      }
     }
-  }
 
-  xCoordArrayBuilder.Reserve(numRows);
-  xCoordArrayBuilder.AppendValues(xCoordVector);
+    std::shared_ptr<arrow::Table> table;
+    std::vector<std::shared_ptr<arrow::Array>> arrays;
 
-  yCoordArrayBuilder.Reserve(numRows);
-  yCoordArrayBuilder.AppendValues(yCoordVector);
+    arrow::Int32Builder xCoordArrayBuilder;
+    arrow::Int32Builder yCoordArrayBuilder;
+    arrow::Int32Builder intensityArrayBuilder;
+    std::vector<int32_t> xCoordVector;
+    std::vector<int32_t> yCoordVector;
+    std::vector<int32_t> intensityVector;
 
-  intensityArrayBuilder.Reserve(numRows);
-  intensityArrayBuilder.AppendValues(intensityVector);
+    int64_t numRows = 0;
+    for (int i = 0; i < ySize; i++) {
+        for (int j = 0; j < xSize; j++) {
+            switch (dataType) {
+                case NDInt8:
+                case NDUInt8:
+                    if (((uint8_t*) pArray->pData)[i * xSize + j] != 0) {
+                        xCoordVector.push_back(j);
+                        yCoordVector.push_back(i);
 
-  auto xCoordArrayPtr = xCoordArrayBuilder.Finish();
-  auto yCoordArrayPtr = yCoordArrayBuilder.Finish();
-  auto intensityArrayPtr = intensityArrayBuilder.Finish();
-  if (!xCoordArrayPtr.ok() || !yCoordArrayPtr.ok() || !intensityArrayPtr.ok()) {
-    ERR("Failed to build Arrow arrays!");
-  }
+                        intensityVector.push_back(
+                            (int32_t) ((uint8_t*) pArray->pData)[i * xSize + j]);
+                        numRows++;
+                    }
+                case NDInt16:
+                case NDUInt16:
+                    if (((uint16_t*) pArray->pData)[i * xSize + j] != 0) {
+                        xCoordVector.push_back(j);
 
-  std::shared_ptr<arrow::Array> xCoordArray = *xCoordArrayPtr;
-  std::shared_ptr<arrow::Array> yCoordArray = *yCoordArrayPtr;
-  std::shared_ptr<arrow::Array> intensityArray = *intensityArrayPtr;
+                        yCoordVector.push_back(i);
+                        intensityVector.push_back(
+                            (int32_t) ((uint16_t*) pArray->pData)[i * xSize + j]);
+                        numRows++;
+                    }
+                default:
+                    ERR("Data type not supported!");
+                    return asynError;
+            }
+        }
+    }
 
-  arrays.push_back(xCoordArray);
-  arrays.push_back(yCoordArray);
-  arrays.push_back(intensityArray);
+    xCoordArrayBuilder.Reserve(numRows);
+    xCoordArrayBuilder.AppendValues(xCoordVector);
 
-  this->table = arrow::Table::Make(this->schema, arrays);
+    yCoordArrayBuilder.Reserve(numRows);
+    yCoordArrayBuilder.AppendValues(yCoordVector);
 
-  status = writeCSV();
+    intensityArrayBuilder.Reserve(numRows);
+    intensityArrayBuilder.AppendValues(intensityVector);
+
+    auto xCoordArrayPtr = xCoordArrayBuilder.Finish();
+    auto yCoordArrayPtr = yCoordArrayBuilder.Finish();
+    auto intensityArrayPtr = intensityArrayBuilder.Finish();
+    if (!xCoordArrayPtr.ok() || !yCoordArrayPtr.ok() || !intensityArrayPtr.ok()) {
+        ERR("Failed to build Arrow arrays!");
+    }
+
+    std::shared_ptr<arrow::Array> xCoordArray = *xCoordArrayPtr;
+    std::shared_ptr<arrow::Array> yCoordArray = *yCoordArrayPtr;
+    std::shared_ptr<arrow::Array> intensityArray = *intensityArrayPtr;
+
+    arrays.push_back(xCoordArray);
+    arrays.push_back(yCoordArray);
+    arrays.push_back(intensityArray);
+
+    this->table = arrow::Table::Make(this->schema, arrays);
+
+    status = writeCSV();
 }
 
 /**
@@ -191,12 +138,11 @@ asynStatus NDPluginArrow::writeFile(){
 }
 */
 
-asynStatus NDPluginArrow::readFile(NDArray **pArray) {
+asynStatus NDPluginArrow::readFile(NDArray** pArray) {
+    const char* functionName = "readFile";
+    asynStatus status = asynSuccess;
 
-  const char *functionName = "readFile";
-  asynStatus status = asynSuccess;
-
-  return status;
+    return status;
 }
 
 /**
@@ -209,25 +155,24 @@ asynStatus NDPluginArrow::readFile(NDArray **pArray) {
  * @params[in]: value		-> value PV was set to
  * @return: success if PV was updated correctly, otherwise error
  */
-asynStatus NDPluginArrow::writeInt32(asynUser *pasynUser, epicsInt32 value) {
-  const char *functionName = "writeInt32";
-  int function = pasynUser->reason;
-  asynStatus status = asynSuccess;
+asynStatus NDPluginArrow::writeInt32(asynUser* pasynUser, epicsInt32 value) {
+    const char* functionName = "writeInt32";
+    int function = pasynUser->reason;
+    asynStatus status = asynSuccess;
 
-  status = setIntegerParam(function, value);
-  LOG_ARGS("function = %d value=%d", function, value);
+    status = setIntegerParam(function, value);
+    LOG_ARGS("function = %d value=%d", function, value);
 
-  // TODO: Handle callbacks for any integer param write ops
+    // TODO: Handle callbacks for any integer param write ops
 
-  if (function < ND_ARROW_FIRST_PARAM) {
-    status = NDPluginDriver::writeInt32(pasynUser, value);
-  }
-  callParamCallbacks();
-  if (status) {
-    ERR_ARGS("Failed to wrote Int32 val to PV: function = %d value=%d",
-             function, value);
-  }
-  return status;
+    if (function < ND_ARROW_FIRST_PARAM) {
+        status = NDPluginDriver::writeInt32(pasynUser, value);
+    }
+    callParamCallbacks();
+    if (status) {
+        ERR_ARGS("Failed to wrote Int32 val to PV: function = %d value=%d", function, value);
+    }
+    return status;
 }
 
 /* Process callbacks function inherited from NDPluginDriver.
@@ -305,39 +250,35 @@ here.
 */
 
 // constructror from base class, replace with your plugin name
-NDPluginArrow::NDPluginArrow(const char *portName, int queueSize,
-                             int blockingCallbacks, const char *NDArrayPort,
-                             int NDArrayAddr, int maxBuffers, size_t maxMemory,
-                             int priority, int stackSize, int maxThreads)
+NDPluginArrow::NDPluginArrow(const char* portName, int queueSize, int blockingCallbacks,
+                             const char* NDArrayPort, int NDArrayAddr, int maxBuffers,
+                             size_t maxMemory, int priority, int stackSize, int maxThreads)
     /* Invoke the base class constructor */
-    : NDPluginFile(
-          portName, queueSize, blockingCallbacks, NDArrayPort, NDArrayAddr, 1,
-          maxBuffers, maxMemory,
-          asynInt32ArrayMask | asynFloat64ArrayMask | asynGenericPointerMask,
-          asynInt32ArrayMask | asynFloat64ArrayMask | asynGenericPointerMask,
-          ASYN_CANBLOCK, 1, priority, stackSize, maxThreads) {
+    : NDPluginFile(portName, queueSize, blockingCallbacks, NDArrayPort, NDArrayAddr, 1, maxBuffers,
+                   maxMemory, asynInt32ArrayMask | asynFloat64ArrayMask | asynGenericPointerMask,
+                   asynInt32ArrayMask | asynFloat64ArrayMask | asynGenericPointerMask,
+                   ASYN_CANBLOCK, 1, priority, stackSize, maxThreads) {
+    char versionString[25];
 
-  char versionString[25];
+    // Initialize Parameters here, using the string vals and indexes from the
+    // header. Ex: createParam(NDPluginArrowOctetString, 	asynParamOctet,
+    // &NDPluginArrowOctet);  -> asynParamOctet records (stringin, stringout,
+    // waveform) createParam(NDPluginArrowIntegerString, 	asynParamInt32,
+    // &NDPluginArrowInteger);  -> asynInt32 records (bo, bi, mbbo, mbbi, ao, ai)
+    // createParam(NDPluginArrowFloatString, 	asynParamFloat64,
+    // &NDPluginArrowFloat);  -> asynParamFloat64 records (ao, ai, waveform)
 
-  // Initialize Parameters here, using the string vals and indexes from the
-  // header. Ex: createParam(NDPluginArrowOctetString, 	asynParamOctet,
-  // &NDPluginArrowOctet);  -> asynParamOctet records (stringin, stringout,
-  // waveform) createParam(NDPluginArrowIntegerString, 	asynParamInt32,
-  // &NDPluginArrowInteger);  -> asynInt32 records (bo, bi, mbbo, mbbi, ao, ai)
-  // createParam(NDPluginArrowFloatString, 	asynParamFloat64,
-  // &NDPluginArrowFloat);  -> asynParamFloat64 records (ao, ai, waveform)
+    this->xCoord = arrow::field("X", arrow::int32());
+    this->yCoord = arrow::field("Y", arrow::int32());
+    this->intensity = arrow::field("Intensity", arrow::int32());
+    this->schema = arrow::schema({this->xCoord, this->yCoord, this->intensity});
 
-  this->xCoord = arrow::field("X", arrow::int32());
-  this->yCoord = arrow::field("Y", arrow::int32());
-  this->intensity = arrow::field("Intensity", arrow::int32());
-  this->schema = arrow::schema({this->xCoord, this->yCoord, this->intensity});
-
-  // Set some basic plugin info Params
-  setStringParam(NDPluginDriverPluginType, "NDPluginArrow");
-  epicsSnprintf(versionString, sizeof(versionString), "%d.%d.%d",
-                NDARROW_VERSION, NDARROW_REVISION, NDARROW_MODIFICATION);
-  setStringParam(NDDriverVersion, versionString);
-  connectToArrayPort();
+    // Set some basic plugin info Params
+    setStringParam(NDPluginDriverPluginType, "NDPluginArrow");
+    epicsSnprintf(versionString, sizeof(versionString), "%d.%d.%d", NDARROW_VERSION,
+                  NDARROW_REVISION, NDARROW_MODIFICATION);
+    setStringParam(NDDriverVersion, versionString);
+    connectToArrayPort();
 }
 
 /**
@@ -347,17 +288,14 @@ NDPluginArrow::NDPluginArrow(const char *portName, int queueSize,
  *
  * @params[in]	-> all passed to constructor
  */
-extern "C" int NDArrowConfigure(const char *portName, int queueSize,
-                                int blockingCallbacks, const char *NDArrayPort,
-                                int NDArrayAddr, int maxBuffers,
-                                size_t maxMemory, int priority, int stackSize,
-                                int maxThreads) {
-
-  // Initialize instance of our plugin and start it.
-  NDPluginArrow *pPlugin = new NDPluginArrow(
-      portName, queueSize, blockingCallbacks, NDArrayPort, NDArrayAddr,
-      maxBuffers, maxMemory, priority, stackSize, maxThreads);
-  return pPlugin->start();
+extern "C" int NDArrowConfigure(const char* portName, int queueSize, int blockingCallbacks,
+                                const char* NDArrayPort, int NDArrayAddr, int maxBuffers,
+                                size_t maxMemory, int priority, int stackSize, int maxThreads) {
+    // Initialize instance of our plugin and start it.
+    NDPluginArrow* pPlugin =
+        new NDPluginArrow(portName, queueSize, blockingCallbacks, NDArrayPort, NDArrayAddr,
+                          maxBuffers, maxMemory, priority, stackSize, maxThreads);
+    return pPlugin->start();
 }
 
 /* IOC shell arguments passed to the plugin configure function */
@@ -371,25 +309,21 @@ static const iocshArg initArg6 = {"maxMemory", iocshArgInt};
 static const iocshArg initArg7 = {"priority", iocshArgInt};
 static const iocshArg initArg8 = {"stackSize", iocshArgInt};
 static const iocshArg initArg9 = {"maxThreads", iocshArgInt};
-static const iocshArg *const initArgs[] = {
-    &initArg0, &initArg1, &initArg2, &initArg3, &initArg4,
-    &initArg5, &initArg6, &initArg7, &initArg8, &initArg9};
+static const iocshArg* const initArgs[] = {&initArg0, &initArg1, &initArg2, &initArg3, &initArg4,
+                                           &initArg5, &initArg6, &initArg7, &initArg8, &initArg9};
 
 // Define the path to your plugin's extern configure function above
 static const iocshFuncDef initFuncDef = {"NDArrowConfigure", 10, initArgs};
 
 /* link the configure function with the passed args, and call it from the IOC
  * shell */
-static void initCallFunc(const iocshArgBuf *args) {
-  NDArrowConfigure(args[0].sval, args[1].ival, args[2].ival, args[3].sval,
-                   args[4].ival, args[5].ival, args[6].ival, args[7].ival,
-                   args[8].ival, args[9].ival);
+static void initCallFunc(const iocshArgBuf* args) {
+    NDArrowConfigure(args[0].sval, args[1].ival, args[2].ival, args[3].sval, args[4].ival,
+                     args[5].ival, args[6].ival, args[7].ival, args[8].ival, args[9].ival);
 }
 
 /* function to register the configure function in the IOC shell */
-extern "C" void NDArrowRegister(void) {
-  iocshRegister(&initFuncDef, initCallFunc);
-}
+extern "C" void NDArrowRegister(void) { iocshRegister(&initFuncDef, initCallFunc); }
 
 /* Exports plugin registration */
 extern "C" {
