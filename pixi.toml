@@ -17,6 +17,9 @@ pre-commit = ">=4.5.1,<5"
 ruff = ">=0.14.0,<0.15"
 pip = ">=25.2,<26"
 python = ">=3.13,<3.14"
+arrow = ">=1.4.0,<2"
+pyarrow = ">=23.0.0,<24"
+pandas = ">=3.0.0,<4"
 
 [pypi-dependencies]
 epicsdbtools = { git = "https://github.com/jwlodek/epicsdbtools.git" }

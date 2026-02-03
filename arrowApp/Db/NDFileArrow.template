@@ -1,0 +1,36 @@
+# Author: Jakub Wlodek
+
+# Include the NDFile template file
+include "NDFile.template"
+
+# include the base plugin template file
+include "NDPluginBase.template"
+
+
+record(mbbo, "$(P)$(R)OutputFileFormat") {
+    field(DESC, "Output File Format")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))ARROW_FILE_FORMAT")
+    field(ZRST, "Parquet")
+    field(ZRVL, "0")
+    field(ONST, "CSV")
+    field(ONVL, "1")
+    field(TWST, "Arrow IPC")
+    field(TWVL, "2")
+    field(VAL, "0")
+    field(PINI, "YES")
+}
+
+record(mbbi, "$(P)$(R)OutputFileFormat_RBV") {
+    field(DESC, "Output File Format Readback")
+    field(DTYP, "asynInt32")
+    field(INP,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))ARROW_FILE_FORMAT")
+    field(ZRST, "Parquet")
+    field(ZRVL, "0")
+    field(ONST, "CSV")
+    field(ONVL, "1")
+    field(TWST, "Arrow IPC")
+    field(TWVL, "2")
+    field(VAL, "0")
+    field(SCAN, "I/O Intr")
+}

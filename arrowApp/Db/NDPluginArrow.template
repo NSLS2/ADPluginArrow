@@ -1,7 +1,0 @@
-# Author: Jakub Wlodek
-
-# Include the NDFile template file
-include "NDFile.template"
-
-# include the base plugin template file
-include "NDPluginBase.template"

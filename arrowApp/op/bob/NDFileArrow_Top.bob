@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!--Saved on 2025-11-14 10:08:36 by jwlodek-->
+<!--Saved on 2026-02-03 12:59:47 by jwlodek-->
 <display version="2.0.0">
-  <name>NDPluginArrow Top</name>
+  <name>NDFileArrow Top</name>
   <width>1300</width>
   <height>1000</height>
   <background_color>
@@ -10,10 +10,11 @@
   </background_color>
   <widget type="embedded" version="2.0.0">
     <name>Embedded Display</name>
-    <file>NDPluginArrow.bob</file>
-    <x>740</x>
-    <y>40</y>
-    <height>840</height>
+    <file>NDFileArrow.bob</file>
+    <x>410</x>
+    <y>450</y>
+    <width>490</width>
+    <height>50</height>
     <resize>2</resize>
   </widget>
   <widget type="embedded" version="2.0.0">
@@ -21,8 +22,17 @@
     <file>../../../../ADCore/ADApp/op/bob/autoconvert/NDPluginBase.bob</file>
     <x>10</x>
     <y>20</y>
-    <width>715</width>
-    <height>970</height>
+    <width>380</width>
+    <height>555</height>
+    <resize>2</resize>
+  </widget>
+  <widget type="embedded" version="2.0.0">
+    <name>Embedded Display_2</name>
+    <file>../../../../ADCore/ADApp/op/bob/autoconvert/NDFileBase.bob</file>
+    <x>400</x>
+    <y>20</y>
+    <width>675</width>
+    <height>405</height>
     <resize>2</resize>
   </widget>
 </display>

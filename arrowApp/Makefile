@@ -1,9 +1,14 @@
 TOP=..
 include $(TOP)/configure/CONFIG
 
-DIRS := $(DIRS) $(filter-out $(DIRS), $(wildcard *db*))
-DIRS := $(DIRS) $(filter-out $(DIRS), $(wildcard *Db*))
-
 DIRS += src
+
+ifeq ($(BUILD_TESTS), YES)
+DIRS := $(DIRS) tests
+tests_DEPEND_DIRS += src
+endif
+
+
+DIRS := $(DIRS) Db
 
 include $(TOP)/configure/RULES_DIRS

@@ -6,17 +6,18 @@ include $(TOP)/configure/CONFIG
 
 USR_CXXFLAGS += -std=c++17
 
-USR_INCLUDES += -I$(TOP)/arrowSupport/include
+DBD += NDFileArrow.dbd
 
-DBD += NDPluginArrow.dbd
+INC += NDFileArrow.h
+INC += NDFileArrowParamDefs.h
 
-INC += NDPluginArrow.h
+LIBRARY_IOC += NDFileArrow
 
-LIBRARY_IOC += NDPluginArrow
-
-NDPluginArrow_SRCS += NDPluginArrow.cpp
+NDFileArrow_SRCS += NDFileArrow.cpp NDFileArrowParamDefs.cpp
 
 include $(ADCORE)/ADApp/commonLibraryMakefile
+
+NDFileArrow_SYS_LIBS += arrow parquet
 
 include $(TOP)/configure/RULES
 #----------------------------------------
