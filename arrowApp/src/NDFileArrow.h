@@ -126,7 +126,8 @@ shared_ptr<arrow::DataType> getArrowDataType(NDDataType_t dataType);
  * PT: Pixel type
  */
 template <typename CT, typename PT>
-using vectorizedImg = std::tuple<std::vector<CT>, std::vector<CT>, std::vector<std::vector<PT>>>;
+using vectorizedImg = std::tuple<size_t, std::vector<CT>, std::vector<CT>, std::vector<std::vector<PT>>>;
+
 /**
  * Convert raw image data to vectorized format suitable for Arrow storage.
  * Skips pixels where all channel values are zero.
@@ -139,7 +140,7 @@ template <typename CT, typename PT>
 vectorizedImg<CT, PT> convertImgToVectors(PT* data, CT rows, CT cols, int nChannels) {
     // cout << "Converting image to vectors: " << rows << "x" << cols << " with " << nChannels << " channels." << endl;
 
-    vectorizedImg<CT, PT> reshapedData = {std::vector<CT>(), std::vector<CT>(), std::vector<std::vector<PT>>(nChannels)};
+    vectorizedImg<CT, PT> reshapedData = {0, std::vector<CT>(), std::vector<CT>(), std::vector<std::vector<PT>>(nChannels)};
 
     for (CT i = 0; i < rows; ++i) {
         for (CT j = 0; j < cols; ++j) {
@@ -154,10 +155,13 @@ vectorizedImg<CT, PT> convertImgToVectors(PT* data, CT rows, CT cols, int nChann
             if (allZeros) continue;  // Skip this pixel if all channel values are zero
             // cout << "Pixel (" << j << ", " << i << ") is hot with value: " << static_cast<int>(channelValues[0]) << endl;
 
-            std::get<0>(reshapedData).push_back(j);  // X coordinate
-            std::get<1>(reshapedData).push_back(i);  // Y coordinate
+            std::get<0>(reshapedData) += 1;  // Increment count of hot pixels
+            std::get<1>(reshapedData).push_back(j);  // X coordinate
+            std::get<2>(reshapedData).push_back(i);  // Y coordinate
+
+            // TODO: Come up with a better way to do this rather than looping over the channels again
             for (int c = 0; c < nChannels; ++c) {
-                std::get<2>(reshapedData)[c].push_back(channelValues[c]);
+                std::get<3>(reshapedData)[c].push_back(channelValues[c]);
             }
         }
     }
@@ -167,7 +171,7 @@ vectorizedImg<CT, PT> convertImgToVectors(PT* data, CT rows, CT cols, int nChann
 
 template <typename CT, typename PT>
 std::shared_ptr<arrow::Table> createArrowTableFromNDArray(NDArray* pArray, NDArrayInfo info, std::shared_ptr<arrow::Schema> schema) {
-    auto [xCoords, yCoords, pixelChannels] = convertImgToVectors<CT, PT>(
+    auto [nRows, xCoords, yCoords, pixelChannels] = convertImgToVectors<CT, PT>(
         static_cast<PT*>(pArray->pData),
         info.ySize,
         info.xSize,
@@ -231,14 +235,23 @@ std::shared_ptr<arrow::Table> createArrowTableFromNDArray(NDArray* pArray, NDArr
         columns.push_back(pixelArr);
     }
 
+    // Create rows for standard attribute fields
+    std::shared_ptr<arrow::Scalar> uniqueIDScalar = std::make_shared<arrow::Int32Scalar>(pArray->uniqueId);
+    std::shared_ptr<arrow::Scalar> timestampScalar = std::make_shared<arrow::DoubleScalar>(pArray->timeStamp);
+    std::shared_ptr<arrow::Scalar> epicsTSSecScalar = std::make_shared<arrow::UInt32Scalar>(pArray->epicsTS.secPastEpoch);
+    std::shared_ptr<arrow::Scalar> epicsTSnSecScalar = std::make_shared<arrow::UInt32Scalar>(pArray->epicsTS.nsec);
+    columns.push_back(arrow::MakeArrayFromScalar(*uniqueIDScalar, nRows).ValueOrDie());
+    columns.push_back(arrow::MakeArrayFromScalar(*timestampScalar, nRows).ValueOrDie());
+    columns.push_back(arrow::MakeArrayFromScalar(*epicsTSSecScalar, nRows).ValueOrDie());
+    columns.push_back(arrow::MakeArrayFromScalar(*epicsTSnSecScalar, nRows).ValueOrDie());
+
     shared_ptr<arrow::Table> table = arrow::Table::Make(schema, columns);
     // cout << "Table in func " << table->ToString() << endl;
     return table;
 }
 
 shared_ptr<arrow::Schema> createSchema(NDDataType_t dataType,
-                                       NDColorMode_t colorMode, int xSize, int ySize,
-                                       NDArrowFileFormat fileFormat);
+                                       NDColorMode_t colorMode, int xSize, int ySize);
 
 /* Plugin class, extends plugin driver */
 class NDPLUGIN_API NDFileArrow : public NDPluginFile {

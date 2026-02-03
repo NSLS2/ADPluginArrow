@@ -32,10 +32,8 @@ shared_ptr<arrow::DataType> getArrowDataType(NDDataType_t dataType) {
 }
 
 shared_ptr<arrow::Schema> createSchema(NDDataType_t dataType,
-                                       NDColorMode_t colorMode, int xSize, int ySize,
-                                       NDArrowFileFormat fileFormat) {
+                                       NDColorMode_t colorMode, int xSize, int ySize) {
     shared_ptr<arrow::DataType> pixelDataType, coordDataType;
-    shared_ptr<arrow::Field> ts, xCoord, yCoord;
     shared_ptr<arrow::FieldVector> fields = make_shared<arrow::FieldVector>();
 
     // Get required min field dtype from NDDataType_t
@@ -46,6 +44,8 @@ shared_ptr<arrow::Schema> createSchema(NDDataType_t dataType,
         coordDataType = arrow::uint32();
     } else if (xSize > std::numeric_limits<uint8_t>::max() || ySize > std::numeric_limits<uint8_t>::max()) {
         coordDataType = arrow::uint16();
+    } else {
+        coordDataType = arrow::uint8();
     }
 
     fields->push_back(arrow::field("X", coordDataType));
@@ -62,21 +62,13 @@ shared_ptr<arrow::Schema> createSchema(NDDataType_t dataType,
         throw std::runtime_error("Only Mono and RGB1 color modes are supported!");
     }
 
-    // CSV does not support rich metadata, but parquet and IPC do
-    if (fileFormat != NDArrowFileFormat::CSV) {
-        shared_ptr<arrow::KeyValueMetadata> metadata = make_shared<arrow::KeyValueMetadata>();
+    // Default attribute fields
+    fields->push_back(arrow::field("NDArrayUniqueId", arrow::int32()));
+    fields->push_back(arrow::field("NDArrayTimestamp", arrow::float64()));
+    fields->push_back(arrow::field("NDArrayEpicsTSSec", arrow::uint32()));
+    fields->push_back(arrow::field("NDArrayEpicsTSnSec", arrow::uint32()));
 
-        // Default attributes (uniqueId, timestamp, epicsTS). One scalar per frame, so add to
-        // metadata
-        arrow::field("NDArrayUniqueId", arrow::int32(), false, metadata);
-        arrow::field("NDArrayTimestamp", arrow::float64(), false, metadata);
-        arrow::field("NDArrayEpicsTSSec", arrow::uint32(), false, metadata);
-        arrow::field("NDArrayEpicsTSnSec", arrow::uint32(), false, metadata);
-        return arrow::schema(*fields, metadata);
-
-    } else {
-        return arrow::schema(*fields);
-    }
+    return arrow::schema(*fields);
 }
 
 asynStatus NDFileArrow::openFile(const char* fileName, NDFileOpenMode_t openMode,
@@ -87,26 +79,22 @@ asynStatus NDFileArrow::openFile(const char* fileName, NDFileOpenMode_t openMode
     /* We don't support opening an existing file for appending yet */
     if (openMode & NDFileModeAppend) return (asynError);
 
-
-    NDArrowFileFormat fileFormat;
-    getIntegerParam(NDFileArrow_FileFormat, (int*) &fileFormat);
-
-    cout << "Opening Arrow file: " << fileName << endl;
+    // cout << "Opening Arrow file: " << fileName << endl;
 
     // Create schema based on pArray info
     NDArrayInfo arrayInfo;
     pArray->getInfo(&arrayInfo);
 
-    cout << "Array Info - DataType: " << pArray->dataType
-         << ", ColorMode: " << arrayInfo.colorMode
-         << ", XSize: " << arrayInfo.xSize
-         << ", YSize: " << arrayInfo.ySize << endl;
+    // cout << "Array Info - DataType: " << pArray->dataType
+    //      << ", ColorMode: " << arrayInfo.colorMode
+    //      << ", XSize: " << arrayInfo.xSize
+    //      << ", YSize: " << arrayInfo.ySize << endl;
     this->schema =
-        createSchema(pArray->dataType, arrayInfo.colorMode, arrayInfo.xSize, arrayInfo.ySize, fileFormat);
+        createSchema(pArray->dataType, arrayInfo.colorMode, arrayInfo.xSize, arrayInfo.ySize);
 
-    cout << "Created Arrow schema: " << this->schema->ToString() << endl;
+    // cout << "Created Arrow schema: " << this->schema->ToString() << endl;
     this->outfile = arrow::io::FileOutputStream::Open(fileName).ValueOrDie();
-    cout << "Opened output file stream." << endl;
+    // cout << "Opened output file stream." << endl;
 
     return asynSuccess;
 }

@@ -41,9 +41,10 @@ TEST_F(TestNDFileArrow, TestConvertImgToVectorsMonoNoZeros){
         40, 50, 60
     };
 
-    auto [xCoords, yCoords, intensityValues] = convertImgToVectors<uint8_t, uint16_t>(data, rows, cols, nChannels);
+    auto [nRows, xCoords, yCoords, intensityValues] = convertImgToVectors<uint8_t, uint16_t>(data, rows, cols, nChannels);
 
     // Check sizes
+    ASSERT_EQ(nRows, 6);
     ASSERT_EQ(xCoords.size(), 6);
     ASSERT_EQ(yCoords.size(), 6);
     ASSERT_EQ(intensityValues.size(), 1);
@@ -67,13 +68,14 @@ TEST_F(TestNDFileArrow, TestConvertImgToVectorsMonoWithZeros){
         0, 0, 60
     };
 
-    auto [xCoords, yCoords, intensityValues] = convertImgToVectors<uint8_t, uint16_t>(data, rows, cols, nChannels);
+    auto [nRows, xCoords, yCoords, intensityValues] = convertImgToVectors<uint8_t, uint16_t>(data, rows, cols, nChannels);
 
     // Check sizes
-    ASSERT_EQ(xCoords.size(), 3);
-    ASSERT_EQ(yCoords.size(), 3);
+    ASSERT_EQ(nRows, 3);
+    ASSERT_EQ(xCoords.size(), nRows);
+    ASSERT_EQ(yCoords.size(), nRows);
     ASSERT_EQ(intensityValues.size(), 1);
-    ASSERT_EQ(intensityValues[0].size(), 3);
+    ASSERT_EQ(intensityValues[0].size(), nRows);
 
     // Check values
     std::vector<uint8_t> expectedX = {0, 2, 2};
@@ -99,15 +101,16 @@ TEST_F(TestNDFileArrow, TestConvertImgToVectorsRGBNoZeros){
         255, 255, 0
     };
 
-    auto [xCoords, yCoords, intensityValues] = convertImgToVectors<uint8_t, uint8_t>(data, rows, cols, nChannels);
+    auto [nRows, xCoords, yCoords, intensityValues] = convertImgToVectors<uint8_t, uint8_t>(data, rows, cols, nChannels);
 
     // Check sizes
-    ASSERT_EQ(xCoords.size(), 4);
-    ASSERT_EQ(yCoords.size(), 4);
+    ASSERT_EQ(nRows, 4);
+    ASSERT_EQ(xCoords.size(), nRows);
+    ASSERT_EQ(yCoords.size(), nRows);
     ASSERT_EQ(intensityValues.size(), 3);
-    ASSERT_EQ(intensityValues[0].size(), 4); // R channel
-    ASSERT_EQ(intensityValues[1].size(), 4); // G channel
-    ASSERT_EQ(intensityValues[2].size(), 4); // B channel
+    ASSERT_EQ(intensityValues[0].size(), nRows); // R channel
+    ASSERT_EQ(intensityValues[1].size(), nRows); // G channel
+    ASSERT_EQ(intensityValues[2].size(), nRows); // B channel
 
     // Check values
     std::vector<uint8_t> expectedX = {0, 1, 0, 1};
@@ -137,15 +140,16 @@ TEST_F(TestNDFileArrow, TestConvertImgToVectorsRGBWithZeros){
         0, 0, 255
     };
 
-    auto [xCoords, yCoords, intensityValues] = convertImgToVectors<uint8_t, uint8_t>(data, rows, cols, nChannels);
+    auto [nRows, xCoords, yCoords, intensityValues] = convertImgToVectors<uint8_t, uint8_t>(data, rows, cols, nChannels);
 
+    ASSERT_EQ(nRows, 2);
     // Check sizes
-    ASSERT_EQ(xCoords.size(), 2);
-    ASSERT_EQ(yCoords.size(), 2);
+    ASSERT_EQ(xCoords.size(), nRows);
+    ASSERT_EQ(yCoords.size(), nRows);
     ASSERT_EQ(intensityValues.size(), 3);
-    ASSERT_EQ(intensityValues[0].size(), 2); // R channel
-    ASSERT_EQ(intensityValues[1].size(), 2); // G channel
-    ASSERT_EQ(intensityValues[2].size(), 2); // B channel
+    ASSERT_EQ(intensityValues[0].size(), nRows); // R channel
+    ASSERT_EQ(intensityValues[1].size(), nRows); // G channel
+    ASSERT_EQ(intensityValues[2].size(), nRows); // B channel
 
     // Check values
     std::vector<uint8_t> expectedX = {1, 1};
@@ -160,3 +164,90 @@ TEST_F(TestNDFileArrow, TestConvertImgToVectorsRGBWithZeros){
     ASSERT_EQ(intensityValues[2], expectedB);
 }
 
+TEST_F(TestNDFileArrow, TestCreateSchemaMono){
+    auto schema = createSchema(NDInt16, NDColorModeMono, 4, 4);
+    // Check number of fields
+    ASSERT_EQ(schema->num_fields(), 7);
+
+    // // Check field names and types
+    auto fields = schema->fields();
+
+    ASSERT_EQ(fields[0]->name(), "X");
+    ASSERT_EQ(fields[0]->type()->id(), arrow::Type::UINT8);
+    ASSERT_EQ(fields[1]->name(), "Y");
+    ASSERT_EQ(fields[1]->type()->id(), arrow::Type::UINT8);
+    ASSERT_EQ(fields[2]->name(), "Intensity");
+    ASSERT_EQ(fields[2]->type()->id(), arrow::Type::INT16);
+
+    schema = createSchema(NDUInt16, NDColorModeMono, 1024, 1024);
+
+    // Check number of fields
+    ASSERT_EQ(schema->num_fields(), 7);
+
+    // Check field names and types
+    fields = schema->fields();
+    ASSERT_EQ(fields[0]->name(), "X");
+    ASSERT_EQ(fields[0]->type()->id(), arrow::Type::UINT16);
+    ASSERT_EQ(fields[1]->name(), "Y");
+    ASSERT_EQ(fields[1]->type()->id(), arrow::Type::UINT16);
+    ASSERT_EQ(fields[2]->name(), "Intensity");
+    ASSERT_EQ(fields[2]->type()->id(), arrow::Type::UINT16);
+
+    // Only check the default attribute fields once
+    ASSERT_EQ(fields[3]->name(), "NDArrayUniqueId");
+    ASSERT_EQ(fields[3]->type()->id(), arrow::Type::INT32);
+    ASSERT_EQ(fields[4]->name(), "NDArrayTimestamp");
+    ASSERT_EQ(fields[4]->type()->id(), arrow::Type::DOUBLE);
+    ASSERT_EQ(fields[5]->name(), "NDArrayEpicsTSSec");
+    ASSERT_EQ(fields[5]->type()->id(), arrow::Type::UINT32);
+    ASSERT_EQ(fields[6]->name(), "NDArrayEpicsTSnSec");
+    ASSERT_EQ(fields[6]->type()->id(), arrow::Type::UINT32);
+
+
+    // Probably an unlikely scenario, but test for super large image sizes
+    schema = createSchema(NDFloat64, NDColorModeMono, 90000, 90000);
+
+    // Check number of fields
+    ASSERT_EQ(schema->num_fields(), 7);
+
+    // Check field names and types
+    fields = schema->fields();
+    ASSERT_EQ(fields[0]->name(), "X");
+    ASSERT_EQ(fields[0]->type()->id(), arrow::Type::UINT32);
+    ASSERT_EQ(fields[1]->name(), "Y");
+    ASSERT_EQ(fields[1]->type()->id(), arrow::Type::UINT32);
+    ASSERT_EQ(fields[2]->name(), "Intensity");
+    ASSERT_EQ(fields[2]->type()->id(), arrow::Type::DOUBLE);
+
+}
+
+TEST_F(TestNDFileArrow, TestCreateSchemaRGB1) {
+    auto schema = createSchema(NDInt8, NDColorModeRGB1, 4, 4);
+    // Check number of fields
+    ASSERT_EQ(schema->num_fields(), 9);
+
+    // // Check field names and types
+    auto fields = schema->fields();
+
+    ASSERT_EQ(fields[0]->name(), "X");
+    ASSERT_EQ(fields[0]->type()->id(), arrow::Type::UINT8);
+    ASSERT_EQ(fields[1]->name(), "Y");
+    ASSERT_EQ(fields[1]->type()->id(), arrow::Type::UINT8);
+    ASSERT_EQ(fields[2]->name(), "R");
+    ASSERT_EQ(fields[2]->type()->id(), arrow::Type::INT8);
+    ASSERT_EQ(fields[3]->name(), "G");
+    ASSERT_EQ(fields[3]->type()->id(), arrow::Type::INT8);
+    ASSERT_EQ(fields[4]->name(), "B");
+    ASSERT_EQ(fields[4]->type()->id(), arrow::Type::INT8);
+
+    // Only check the default attribute fields once
+    ASSERT_EQ(fields[5]->name(), "NDArrayUniqueId");
+    ASSERT_EQ(fields[5]->type()->id(), arrow::Type::INT32);
+    ASSERT_EQ(fields[6]->name(), "NDArrayTimestamp");
+    ASSERT_EQ(fields[6]->type()->id(), arrow::Type::DOUBLE);
+    ASSERT_EQ(fields[7]->name(), "NDArrayEpicsTSSec");
+    ASSERT_EQ(fields[7]->type()->id(), arrow::Type::UINT32);
+    ASSERT_EQ(fields[8]->name(), "NDArrayEpicsTSnSec");
+    ASSERT_EQ(fields[8]->type()->id(), arrow::Type::UINT32);
+
+}
