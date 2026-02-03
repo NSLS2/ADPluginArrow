@@ -51,8 +51,8 @@ using namespace std;
 
 // version numbers
 #define NDARROW_VERSION 0
-#define NDARROW_REVISION 0
-#define NDARROW_MODIFICATION 1
+#define NDARROW_REVISION 1
+#define NDARROW_MODIFICATION 0
 
 
 // Error message formatters
