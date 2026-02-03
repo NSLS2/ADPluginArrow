@@ -119,8 +119,8 @@ asynStatus NDFileArrow::writeFile(NDArray* pArray) {
     NDArrayInfo arrayInfo;
     pArray->getInfo(&arrayInfo);
 
-    cout << "Writing NDArray uniqueId: " << pArray->uniqueId << endl;
-    cout << this->schema->ToString() << endl;
+    // cout << "Writing NDArray uniqueId: " << pArray->uniqueId << endl;
+    // cout << this->schema->ToString() << endl;
 
     // Get the types of each column from the schema created on file open
     arrow::Type::type coordDataType = this->schema->GetFieldByName("X")->type()->id();
@@ -131,7 +131,7 @@ asynStatus NDFileArrow::writeFile(NDArray* pArray) {
         pixelType = this->schema->GetFieldByName("R")->type()->id();
     }
 
-    cout << "Coordinate data type: " << coordDataType << ", Pixel data type: " << pixelType << endl;
+    // cout << "Coordinate data type: " << coordDataType << ", Pixel data type: " << pixelType << endl;
 
     shared_ptr<arrow::Table> table;
 
@@ -221,7 +221,7 @@ asynStatus NDFileArrow::writeFile(NDArray* pArray) {
         return asynError;
     }
 
-    cout << "Created Arrow table: " << table->ToString() << endl;
+    // cout << "Created Arrow table: " << table->ToString() << endl;
 
     NDArrowFileFormat fileFormat;
     getIntegerParam(NDFileArrow_FileFormat, (int*) &fileFormat);
@@ -284,81 +284,9 @@ asynStatus NDFileArrow::closeFile() {
     return asynSuccess;
 }
 
-/* Process callbacks function inherited from NDPluginDriver.
- * You must implement this function for your plugin to accept NDArrays
- *
- * @params[in]: pArray -> NDArray recieved by the plugin from the camera
- * @return: void
+/**
+ * Constructor for NDFileArrow class.
  */
-
-/*
-void NDFileArrow::processCallbacks(NDArray *pArray){
-    static const char* functionName = "processCallbacks";
-    NDArray *pScratch;
-    asynStatus status = asynSuccess;
-    NDArrayInfo arrayInfo;
-
-    // If set to true, downstream plugins will perform callbacks on output
-pScratch
-    // If false, no downstream callbacks will be performed
-    bool performCallbacks = true;
-
-    //call base class and get information about frame
-    NDPluginDriver::beginProcessCallbacks(pArray);
-
-    pArray->getInfo(&arrayInfo);
-
-    //unlock the mutex for the processing portion
-    this->unlock();
-
-    // This sets the output of the plugin to the input array
-    pScratch = pArray;
-
-    // If we are manipulating the image/output, we allocate a new scratch frame
-    // You will need to specify dimensions, and data type.
-
-    //pScratch = pNDArrayPool->alloc(ndims, dims, dataType, 0, NULL
-    //if(pScratch == NULL){
-    //    ERR("Unable to allocate frame.")
-    //    return;
-    //}
-
-
-    // Process the image here. pArray is read only, and if any image
-manipulation is required
-    // a copy should be made into pScratch.
-    //
-    // Note that this expects any external libraries to be thread safe. If they
-aren't, move
-    // the processing to after this->lock();
-    //
-    // Access data with pArray->pData.
-    // DO NOT CALL pArray.release()
-
-    this->lock();
-
-    // If pScratch was allocated, set the color mode and unique ID attributes
-here.
-
-    //pScratch->pAttributeList->add("ColorMode", "Color Mode", NDAttrInt32,
-&colorMode);
-    //pScratch->uniqueId = pArray->uniqueId;
-
-    if(status == asynError){
-        ERR("Image not processed correctly!");
-        return;
-    }
-
-    NDPluginDriver::endProcessCallbacks(pScratch, false, performCallbacks);
-
-    // If pScratch was allocated in this function, make sure to release it.
-    // pScratch.release()
-
-    callParamCallbacks();
-}
-*/
-
-// constructror from base class, replace with your plugin name
 NDFileArrow::NDFileArrow(const char* portName, int queueSize, int blockingCallbacks,
                              const char* NDArrayPort, int NDArrayAddr, int maxBuffers,
                              size_t maxMemory, int priority, int stackSize, int maxThreads)
@@ -376,16 +304,15 @@ NDFileArrow::NDFileArrow(const char* portName, int queueSize, int blockingCallba
     epicsSnprintf(versionString, sizeof(versionString), "%d.%d.%d", NDARROW_VERSION,
                   NDARROW_REVISION, NDARROW_MODIFICATION);
     setStringParam(NDDriverVersion, versionString);
-    this->supportsMultipleArrays = 0;
+
+    this->supportsMultipleArrays = 0; // For now, only support single NDArray per file
+
     connectToArrayPort();
 }
 
 /**
- * External configure function. This will be called from the IOC shell of the
- * detector the plugin is attached to, and will create an instance of the plugin
- * and start it
- *
- * @params[in]	-> all passed to constructor
+ * Plugin configuration function.
+ * Called directly from iocsh.
  */
 extern "C" int NDFileArrowConfigure(const char* portName, int queueSize, int blockingCallbacks,
                                 const char* NDArrayPort, int NDArrayAddr, int maxBuffers,

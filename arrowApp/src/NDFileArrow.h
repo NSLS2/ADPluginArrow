@@ -137,7 +137,7 @@ using vectorizedImg = std::tuple<std::vector<CT>, std::vector<CT>, std::vector<s
  */
 template <typename CT, typename PT>
 vectorizedImg<CT, PT> convertImgToVectors(PT* data, CT rows, CT cols, int nChannels) {
-    cout << "Converting image to vectors: " << rows << "x" << cols << " with " << nChannels << " channels." << endl;
+    // cout << "Converting image to vectors: " << rows << "x" << cols << " with " << nChannels << " channels." << endl;
 
     vectorizedImg<CT, PT> reshapedData = {std::vector<CT>(), std::vector<CT>(), std::vector<std::vector<PT>>(nChannels)};
 
@@ -152,7 +152,7 @@ vectorizedImg<CT, PT> convertImgToVectors(PT* data, CT rows, CT cols, int nChann
             }
 
             if (allZeros) continue;  // Skip this pixel if all channel values are zero
-            cout << "Pixel (" << j << ", " << i << ") is hot with value: " << static_cast<int>(channelValues[0]) << endl;
+            // cout << "Pixel (" << j << ", " << i << ") is hot with value: " << static_cast<int>(channelValues[0]) << endl;
 
             std::get<0>(reshapedData).push_back(j);  // X coordinate
             std::get<1>(reshapedData).push_back(i);  // Y coordinate
@@ -161,7 +161,7 @@ vectorizedImg<CT, PT> convertImgToVectors(PT* data, CT rows, CT cols, int nChann
             }
         }
     }
-    cout << "Converted image to vectors with " << std::get<0>(reshapedData).size() << " hot pixels." << endl;
+    // cout << "Converted image to vectors with " << std::get<0>(reshapedData).size() << " hot pixels." << endl;
     return reshapedData;
 }
 
@@ -174,7 +174,7 @@ std::shared_ptr<arrow::Table> createArrowTableFromNDArray(NDArray* pArray, NDArr
         info.colorMode == NDColorModeMono ? 1 : 3
     );
 
-    cout << "Pixel channels size: " << pixelChannels.size() << endl;
+    // cout << "Pixel channels size: " << pixelChannels.size() << endl;
 
     std::shared_ptr<arrow::Array> xCoordArr, yCoordArr;
     std::vector<std::shared_ptr<arrow::Array>> pixelArrays(pixelChannels.size());
@@ -183,7 +183,6 @@ std::shared_ptr<arrow::Table> createArrowTableFromNDArray(NDArray* pArray, NDArr
         xCoordArr = std::make_shared<arrow::UInt8Array>(xCoords.size(), arrow::Buffer::FromVector(xCoords));
         yCoordArr = std::make_shared<arrow::UInt8Array>(yCoords.size(), arrow::Buffer::FromVector(yCoords));
     } else if constexpr (std::is_same<CT, uint16_t>::value) {
-        cout << "Creating UInt16 arrays for coordinates." << endl;
         xCoordArr = std::make_shared<arrow::UInt16Array>(xCoords.size(), arrow::Buffer::FromVector(xCoords));
         yCoordArr = std::make_shared<arrow::UInt16Array>(yCoords.size(), arrow::Buffer::FromVector(yCoords));
     } else if constexpr (std::is_same<CT, uint32_t>::value) {
@@ -233,7 +232,7 @@ std::shared_ptr<arrow::Table> createArrowTableFromNDArray(NDArray* pArray, NDArr
     }
 
     shared_ptr<arrow::Table> table = arrow::Table::Make(schema, columns);
-    cout << "Table in func " << table->ToString() << endl;
+    // cout << "Table in func " << table->ToString() << endl;
     return table;
 }
 
